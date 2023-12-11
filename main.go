@@ -32,7 +32,7 @@ func main() {
 	v1Router := chi.NewRouter()
 	v1Router.Get("/healthz", HandlerHealth)
 	v1Router.Post("/user", dbCfg.HandlerCreateUser(InsertInUserTable))
-	v1Router.Get("/user", dbCfg.HandlerCreateUser(GetUserData))
+	v1Router.Get("/user", dbCfg.middlewareAuth(GetUserData))
 	router.Mount("/bim", v1Router)
 	srv := &http.Server{
 		Handler: router,

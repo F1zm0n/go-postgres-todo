@@ -10,12 +10,12 @@ import (
 type MyDB struct {
 	Db *sql.DB
 }
-type dbFunction func(w http.ResponseWriter, db *sql.DB, user User)
+type dbFunction func(w http.ResponseWriter, db *sql.DB, user *User)
 
 func (apiCfg *MyDB) HandlerCreateUser(dbFunc dbFunction) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body) //инициализирует декодер
-		params := User{}
+		params := &User{}
 		err := decoder.Decode(&params) //читает боди реквеста
 		if err != nil {
 			AnswerWithError(w, 400, fmt.Sprintf("Error parsing json:: %v", err))

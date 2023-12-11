@@ -6,21 +6,26 @@ import (
 	"net/http"
 )
 
-func AnswerWithJson(w http.ResponseWriter, code int, parser interface{}) {
-	jsoned, err := json.Marshal(parser)
+func AnswerWithJson(w http.ResponseWriter, code int, payload interface{}) {
+	// Преобразование структуры данных (payload) в формат JSON.
+	dat, err := json.Marshal(payload)
+	// Если произошла ошибка при маршалинге, логируем сообщение и отправляем HTTP-ответ с кодом 500 (Internal Server Error).
 	if err != nil {
-		log.Printf("couldn't marshall json %v, error: %v", parser, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Failed to marshall JSON response %v", payload)
+		w.WriteHeader(500)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write(jsoned)
-	if err != nil {
-		log.Printf("couldn't write json: %v, error: %v", jsoned, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	// Установка заголовка Content-type на "application/json".
+	w.Header().Add("Content-type", "application/json")
+	// Установка кода HTTP-ответа
 	w.WriteHeader(code)
+	// Запись данных в тело HTTP-ответа.
+	_, err = w.Write(dat)
+	if err != nil {
+		log.Printf("Failed to write body %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 func AnswerWithError(w http.ResponseWriter, code int, msg string) { //функция выведения ошибок выше 500
 	if code > 499 {

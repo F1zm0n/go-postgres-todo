@@ -15,7 +15,6 @@ func (apiCfg *MyDB) middlewareAuth(dbFunc dbFunction) http.HandlerFunc {
 			AnswerWithError(w, 400, fmt.Sprintf("couldn't get id from header:", err))
 			return
 		}
-		idStruct := &User{Id: id}
-		dbFunc(w, apiCfg.Db, idStruct)
+		dbFunc(w, apiCfg.Db, &User{Id: id})
 	}
 }
