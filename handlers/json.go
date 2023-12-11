@@ -22,7 +22,7 @@ func AnswerWithJson(w http.ResponseWriter, code int, parser interface{}) {
 	}
 	w.WriteHeader(code)
 }
-func answerWithError(w http.ResponseWriter, code int, msg string) { //функция выведения ошибок выше 500
+func AnswerWithError(w http.ResponseWriter, code int, msg string) { //функция выведения ошибок выше 500
 	if code > 499 {
 		log.Println("Responding with 5XX error:", msg)
 	}

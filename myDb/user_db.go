@@ -3,8 +3,11 @@ package Db
 import (
 	"database/sql"
 	"encoding/base64"
+	"fmt"
+	"github.com/F1zm0n/auth.git/handlers"
 	_ "github.com/google/uuid"
 	"log"
+	"net/http"
 )
 
 type User struct {
@@ -12,12 +15,15 @@ type User struct {
 	User_email    string `json:"user_email"`
 	User_password string `json:"user_password"`
 }
+type idJson struct {
+	Id string
+}
 
 func CreateUserTable(db *sql.DB) {
 	query := `CREATE TABLE IF NOT EXISTS "User"(
 		id VARCHAR(129) PRIMARY KEY,
     	user_name VARCHAR(25) NOT NULL,
-		User_email VARCHAR(40) UNIQUE NOT NULL,
+		user_email VARCHAR(40) UNIQUE NOT NULL,
 		password VARCHAR(25) NOT NULL,
 		created_at timestamp DEFAULT NOW()
     )`
@@ -26,8 +32,8 @@ func CreateUserTable(db *sql.DB) {
 		log.Fatalf("couldn't create users table:%v", err)
 	}
 }
-func InsertInUserTable(db *sql.DB, user User) string {
-	query := `INSERT INTO User(id,user_name,User_email,password)
+func InsertInUserTable(w http.ResponseWriter, db *sql.DB, user User) {
+	query := `INSERT INTO User(id,user_name,user_email,password)
 	VALUES ($1,$2,$3,$4) RETURNING id`
 	var id string
 	password := base64.StdEncoding.EncodeToString([]byte(user.User_password))
@@ -35,10 +41,10 @@ func InsertInUserTable(db *sql.DB, user User) string {
 	encodedId := password + "/" + email
 	err := db.QueryRow(query, encodedId, user.User_name, user.User_email, user.User_password).Scan(&id)
 	if err != nil {
-		log.Println("couldn't insert User data in database: ", err)
-		return ""
+		handlers.AnswerWithError(w, 400, fmt.Sprintf("couldn't insert User data in database: %v", err))
+		return
 	}
-	return id
+	handlers.AnswerWithJson(w, 200, idJson{Id: id})
 }
 
 //что бы задекодить делай это
@@ -47,7 +53,7 @@ func InsertInUserTable(db *sql.DB, user User) string {
 //не забудь разделить
 
 // -----------------------------------------------------------------
-func GetUserData(db *sql.DB) User {
+func GetUserData(w http.ResponseWriter, db *sql.DB, user User) {
 	query := `SELECT user_name,password,User_email FROM User
 	VALUES($1) WHERE id=$1 RETURNING user_name,password,User_email `
 	var (
@@ -57,13 +63,12 @@ func GetUserData(db *sql.DB) User {
 	)
 	err := db.QueryRow(query).Scan(&user_name, &password, &user_email)
 	if err != nil {
-		log.Println("wrong id key or ivalid format")
-		return User{}
+		main.AnswerWithError(w, 400, fmt.Sprintf("wrong id key or ivalid format: %v", err))
+		return
 	}
-	return User{
+	main.AnswerWithJson(w, 200, User{
 		User_name:     user_name,
 		User_email:    password,
 		User_password: user_email,
-	}
-
+	})
 }
