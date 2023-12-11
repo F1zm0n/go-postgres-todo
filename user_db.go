@@ -1,16 +1,16 @@
-package Db
+package main
 
 import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"github.com/F1zm0n/auth.git/handlers"
 	_ "github.com/google/uuid"
 	"log"
 	"net/http"
 )
 
 type User struct {
+	Id            string `json:"id"`
 	User_name     string `json:"user_name"`
 	User_email    string `json:"user_email"`
 	User_password string `json:"user_password"`
@@ -33,7 +33,7 @@ func CreateUserTable(db *sql.DB) {
 	}
 }
 func InsertInUserTable(w http.ResponseWriter, db *sql.DB, user User) {
-	query := `INSERT INTO User(id,user_name,user_email,password)
+	query := `INSERT INTO "User"(id,user_name,user_email,password)
 	VALUES ($1,$2,$3,$4) RETURNING id`
 	var id string
 	password := base64.StdEncoding.EncodeToString([]byte(user.User_password))
@@ -41,10 +41,10 @@ func InsertInUserTable(w http.ResponseWriter, db *sql.DB, user User) {
 	encodedId := password + "/" + email
 	err := db.QueryRow(query, encodedId, user.User_name, user.User_email, user.User_password).Scan(&id)
 	if err != nil {
-		handlers.AnswerWithError(w, 400, fmt.Sprintf("couldn't insert User data in database: %v", err))
+		AnswerWithError(w, 400, fmt.Sprintf("couldn't insert User data in database: %v", err))
 		return
 	}
-	handlers.AnswerWithJson(w, 200, idJson{Id: id})
+	AnswerWithJson(w, 200, idJson{Id: id})
 }
 
 //что бы задекодить делай это
@@ -61,12 +61,12 @@ func GetUserData(w http.ResponseWriter, db *sql.DB, user User) {
 		password   string
 		user_email string
 	)
-	err := db.QueryRow(query).Scan(&user_name, &password, &user_email)
+	err := db.QueryRow(query, user.Id).Scan(&user_name, &password, &user_email)
 	if err != nil {
-		main.AnswerWithError(w, 400, fmt.Sprintf("wrong id key or ivalid format: %v", err))
+		AnswerWithError(w, 400, fmt.Sprintf("wrong id key or ivalid format: %v", err))
 		return
 	}
-	main.AnswerWithJson(w, 200, User{
+	AnswerWithJson(w, 200, User{
 		User_name:     user_name,
 		User_email:    password,
 		User_password: user_email,

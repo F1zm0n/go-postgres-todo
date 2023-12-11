@@ -2,8 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"github.com/F1zm0n/auth.git/handlers"
-	Db "github.com/F1zm0n/auth.git/myDb"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	_ "github.com/google/uuid"
@@ -15,11 +13,11 @@ import (
 func main() {
 	connString := "postgres://postgres:F1zm0_007@localhost:5432/goselfmake?sslmode=disable"
 	DataB, err := sql.Open("postgres", connString)
-	dbCfg := &handlers.MyDB{Db: DataB}
+	dbCfg := &MyDB{Db: DataB}
 	if err != nil {
 		log.Fatalf("couldnt connect to database:", err)
 	}
-	Db.CreateUserTable(dbCfg.Db)
+	CreateUserTable(dbCfg.Db)
 
 	defer dbCfg.Db.Close()
 	router := chi.NewRouter()
@@ -32,8 +30,9 @@ func main() {
 		MaxAge:           300,
 	}))
 	v1Router := chi.NewRouter()
-	v1Router.Get("/healthz", handlers.HandlerHealth)
-	v1Router.Post("/user", dbCfg.HandlerCreateUser(Db.InsertInUserTable))
+	v1Router.Get("/healthz", HandlerHealth)
+	v1Router.Post("/user", dbCfg.HandlerCreateUser(InsertInUserTable))
+	v1Router.Get("/user", dbCfg.HandlerCreateUser(GetUserData))
 	router.Mount("/bim", v1Router)
 	srv := &http.Server{
 		Handler: router,
