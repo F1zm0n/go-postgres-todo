@@ -18,7 +18,7 @@ func main() {
 		log.Fatalf("couldnt connect to database:", err)
 	}
 	CreateUserTable(dbCfg.Db)
-
+	CreateTasksTable(dbCfg.Db)
 	defer dbCfg.Db.Close()
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
@@ -33,6 +33,7 @@ func main() {
 	v1Router.Get("/healthz", HandlerHealth)
 	v1Router.Post("/user", dbCfg.HandlerCreateUser(InsertInUserTable))
 	v1Router.Get("/user", dbCfg.middlewareAuth(GetUserData))
+	v1Router.Post("/todo", dbCfg.HandlerCreateTodo(InsertInTasks))
 	router.Mount("/bim", v1Router)
 	srv := &http.Server{
 		Handler: router,

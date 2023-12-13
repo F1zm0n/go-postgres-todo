@@ -7,15 +7,12 @@ import (
 	"net/http"
 )
 
-type MyDB struct {
-	Db *sql.DB
-}
-type dbFunctionUser func(w http.ResponseWriter, db *sql.DB, user *User)
+type dbFunctionTodo func(w http.ResponseWriter, db *sql.DB, TaskStruct *TaskJson)
 
-func (apiCfg *MyDB) HandlerCreateUser(dbFunc dbFunctionUser) http.HandlerFunc {
+func (apiCfg *MyDB) HandlerCreateTodo(dbFunc dbFunctionTodo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body) //инициализирует декодер
-		params := &User{}
+		params := &TaskJson{}
 		err := decoder.Decode(&params) //читает боди реквеста
 		if err != nil {
 			AnswerWithError(w, 400, fmt.Sprintf("Error parsing json:: %v", err))

@@ -7,7 +7,7 @@ import (
 
 // middlewareAuth должен принимать authedHandler и возвращать http.HandlerFunc с правильной сигнатурой
 // что бы она подходила сигнатуре
-func (apiCfg *MyDB) middlewareAuth(dbFunc dbFunction) http.HandlerFunc {
+func (apiCfg *MyDB) middlewareAuth(dbFunc dbFunctionUser) http.HandlerFunc {
 	//возвращаем хэндлер с правильной сигнатурой
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := GetIdKey(r.Header)
