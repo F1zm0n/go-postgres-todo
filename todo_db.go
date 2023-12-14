@@ -29,6 +29,9 @@ func CreateTasksTable(db *sql.DB) {
 		log.Fatalf("couldn't create users table:%v", err)
 	}
 }
+
+//
+
 func InsertInTasks(w http.ResponseWriter, db *sql.DB, task *TaskJson) {
 	if task.Task_name == "" {
 		AnswerWithError(w, 400, fmt.Sprintf("task_name field is empty"))
@@ -57,6 +60,7 @@ func InsertInTasks(w http.ResponseWriter, db *sql.DB, task *TaskJson) {
 		AnswerWithError(w, 400, fmt.Sprintf("couldn't insert Task data in database: %v", err))
 		return
 	}
+	created_at = parseTime(created_at)
 	AnswerWithJson(w, 200, &TaskJson{
 		Task_id:          task_id,
 		Task_name:        task_name,
@@ -64,4 +68,46 @@ func InsertInTasks(w http.ResponseWriter, db *sql.DB, task *TaskJson) {
 		User_id:          user_id,
 		Created_at:       created_at,
 	})
+}
+
+type Task struct {
+	TaskID    string `json:"task_id"`
+	TaskName  string `json:"task_name"`
+	TaskDesc  string `json:"task_description"`
+	CreatedAt string `json:"created_at"`
+}
+
+func GetAllToDo(w http.ResponseWriter, db *sql.DB, TaskStruct *TaskJson) {
+	if TaskStruct.User_id == "" {
+		AnswerWithError(w, 400, fmt.Sprintf("no user_id inserted"))
+		return
+	}
+	query := `SELECT task_id,task_name,task_desc,to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') FROM tasks                                                                     
+    WHERE user_id=$1 ORDER BY created_at DESC `
+	rows, err := db.Query(query, TaskStruct.User_id)
+	if err != nil {
+		AnswerWithError(w, 400, fmt.Sprintf("wrong id key or ivalid format: %v", err))
+		return
+	}
+	var (
+		task_id    string
+		task_name  string
+		task_desc  string
+		created_at string
+	)
+	defer rows.Close()
+	tasks := []Task{}
+	for rows.Next() {
+		err := rows.Scan(&task_id, &task_name, &task_desc, &created_at)
+		if err != nil {
+			AnswerWithError(w, 500, fmt.Sprintf("error scanning row: %v", err))
+			return
+		}
+		tasks = append(tasks, Task{task_id, task_name, task_desc, created_at})
+	}
+	if err := rows.Err(); err != nil {
+		AnswerWithError(w, 500, fmt.Sprintf("error iterating over rows: %v", err))
+		return
+	}
+	AnswerWithJson(w, 200, tasks)
 }

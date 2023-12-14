@@ -34,6 +34,7 @@ func main() {
 	v1Router.Post("/user", dbCfg.HandlerCreateUser(InsertInUserTable))
 	v1Router.Get("/user", dbCfg.middlewareAuth(GetUserData))
 	v1Router.Post("/todo", dbCfg.HandlerCreateTodo(InsertInTasks))
+	v1Router.Get("/todo", dbCfg.HandlerCreateTodo(GetAllToDo))
 	router.Mount("/bim", v1Router)
 	srv := &http.Server{
 		Handler: router,
